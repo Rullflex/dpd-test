@@ -35,8 +35,14 @@ export default class VPagination extends Vue {
     private inputValue: number | null = null;
 
     @Watch('page')
-    private pageWatchHanlder() {
+    private onPageChanged() {
         this.inputValue = this.page;
+    }
+
+    @Watch('max')
+    @Watch('min')
+    private onMinMaxChanged() {
+        this.page = this.getInRange(this.page);
     }
 
     private isOutOfRange(page: number) {
@@ -67,7 +73,7 @@ export default class VPagination extends Vue {
     }
 
     private created() {
-        this.pageWatchHanlder();
+        this.onPageChanged();
     }
 }
 </script>
