@@ -23,7 +23,7 @@
                     <td>{{ row.name }}</td>
                     <td>{{ row.gender }}</td>
                     <td>{{ row.country }}</td>
-                    <td>{{ row.date }}</td>
+                    <td>{{ row.date | formatDate }}</td>
                     <td>{{ row.email }}</td>
                     <td>{{ row.phone }}</td>
                 </tr>
@@ -38,6 +38,7 @@ import { Component, Vue } from 'vue-property-decorator';
 // Utils
 import { chunk, pick } from 'lodash';
 import hasSearch from '@/core/utils/HasSearch';
+import { DateTime } from 'luxon';
 
 // Components
 import VPagination from '@/components/VPagination.vue';
@@ -60,6 +61,11 @@ const PAGINATION_SIZE = 20;
 @Component({
     components: {
         VPagination,
+    },
+    filters: {
+        formatDate(date: string) {
+            return DateTime.fromISO(date).toLocal().toFormat('yyyy LLL dd');
+        },
     },
 })
 export default class App extends Vue {
