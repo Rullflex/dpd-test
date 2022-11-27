@@ -33,7 +33,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
+import { Component, Vue, Watch } from 'vue-property-decorator';
 
 // Utils
 import { chunk, pick } from 'lodash';
@@ -56,6 +56,11 @@ interface TableRow {
     phone: string;
 }
 
+enum URLSearchParamsEnum {
+    Search = 'search',
+    Page = 'page',
+}
+
 const PAGINATION_SIZE = 20;
 
 @Component({
@@ -69,6 +74,8 @@ const PAGINATION_SIZE = 20;
     },
 })
 export default class App extends Vue {
+    private readonly URLSearchParams: URLSearchParams = new URLSearchParams(window.location.search);
+
     private tableData: User[] = [];
     private currentPage = 1;
     private searchText = '';
@@ -108,19 +115,55 @@ export default class App extends Vue {
         return this.chunkedTableData.length;
     }
 
+    private updateURLSearch() {
+        const newRelativePathQuery = window.location.pathname + '?' + this.URLSearchParams.toString();
+        history.pushState(null, '', newRelativePathQuery);
+    }
+
+    @Watch('currentPage')
+    private onCurrentPageChanged() {
+        this.URLSearchParams.set(URLSearchParamsEnum.Page, this.currentPage.toString());
+        this.updateURLSearch();
+    }
+
+    @Watch('searchText')
+    private onSearchTextChanged() {
+        this.URLSearchParams.set(URLSearchParamsEnum.Search, this.searchText);
+        this.updateURLSearch();
+    }
+
+    private parseQueryFilters() {
+        const page = this.URLSearchParams.get(URLSearchParamsEnum.Page);
+        if (page) this.currentPage = parseInt(page);
+
+        const search = this.URLSearchParams.get(URLSearchParamsEnum.Search);
+        if (search) this.searchText = search;
+    }
+
+    private async fetchTableData() {
+        const { results: users }: { results: User[] } = await (await fetch('/api.json').catch((e) => e)).json();
+        return users;
+    }
+
     private async created() {
-        const { results: users }: { results: User[] } = await (await fetch('/api.json')).json();
-        this.tableData = users;
+        this.parseQueryFilters();
+        this.tableData = await this.fetchTableData();
     }
 }
 </script>
 
 <style lang="scss">
 #app {
+    padding: 40px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+
     font-family: Avenir, Helvetica, Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     color: #2c3e50;
-    margin-top: 60px;
 }
 </style>
