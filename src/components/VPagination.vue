@@ -59,7 +59,7 @@ export default class VPagination extends Vue {
 
     private inputHandler(value: number | null) {
         this.inputValue = value;
-        if (!isNull(value) && !this.isOutOfRange(value)) this.page = value;
+        if (!isNull(value)) this.page = this.getInRange(value);
     }
 
     private changeHandler(value: number | null) {
