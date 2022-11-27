@@ -1,6 +1,6 @@
 <template>
     <div id="app">
-        <VPagination v-model="currentPage" :max="20"></VPagination>
+        <VPagination v-model="currentPage" :max="paginationMax"></VPagination>
 
         <table>
             <thead>
@@ -33,11 +33,16 @@
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
 
+// Utils
+import { chunk } from 'lodash';
+
 // Components
 import VPagination from '@/components/VPagination.vue';
 
 // Interfaces
 import User from '@/core/interfaces/User';
+
+const PAGINATION_SIZE = 20;
 
 @Component({
     components: {
@@ -45,12 +50,20 @@ import User from '@/core/interfaces/User';
     },
 })
 export default class App extends Vue {
-    tableData: User[] = [];
-    currentPage = 1;
+    private chunkedTableData: User[][] = [];
+    private currentPage = 1;
 
-    async created() {
-        const res: { results: User[] } = await (await fetch('/api.json')).json();
-        this.tableData = res.results;
+    private get tableData() {
+        return this.chunkedTableData[this.currentPage - 1];
+    }
+
+    private get paginationMax() {
+        return this.chunkedTableData.length;
+    }
+
+    private async created() {
+        const { results: users }: { results: User[] } = await (await fetch('/api.json')).json();
+        this.chunkedTableData = chunk(users, PAGINATION_SIZE);
     }
 }
 </script>
