@@ -1,17 +1,27 @@
 <template>
     <div class="pagination">
-        <button type="button" class="pagination__button" @click="decreasePage">prev</button>
+        <button type="button" @click="decreasePage">prev</button>
 
-        <div class="pagination__counter">{{ page }}</div>
+        <VInputNumeric :value="inputValue" @input="inputHandler" @change="changeHandler"></VInputNumeric>
 
-        <button type="button" class="pagination__button" @click="increasePage">next</button>
+        <button type="button" @click="increasePage">next</button>
     </div>
 </template>
 
 <script lang="ts">
-import { Component, Prop, VModel, Vue } from 'vue-property-decorator';
+import { Component, Prop, VModel, Vue, Watch } from 'vue-property-decorator';
 
-@Component
+// Utils
+import { isNull } from 'lodash';
+
+// Components
+import VInputNumeric from '@/components/VInputNumeric.vue';
+
+@Component({
+    components: {
+        VInputNumeric,
+    },
+})
 export default class VPagination extends Vue {
     @VModel({ type: Number, required: true })
     private page!: number;
@@ -22,22 +32,42 @@ export default class VPagination extends Vue {
     @Prop({ type: Number, default: 1 })
     private min!: number;
 
+    private inputValue: number | null = null;
+
+    @Watch('page')
+    private pageWatchHanlder() {
+        this.inputValue = this.page;
+    }
+
+    private isOutOfRange(page: number) {
+        return page > this.max || page < this.min;
+    }
+
+    private getInRange(page: number) {
+        if (page < this.min) return this.min;
+        if (page > this.max) return this.max;
+        return page;
+    }
+
     private decreasePage() {
-        if (this.page > this.min) this.setPage(this.page - 1);
+        if (this.page > this.min) this.page = this.page - 1;
     }
 
     private increasePage() {
-        if (this.page < this.max) this.setPage(this.page + 1);
+        if (this.page < this.max) this.page = this.page + 1;
     }
 
-    private setPage(page: number) {
-        this.page = page;
+    private inputHandler(value: number | null) {
+        this.inputValue = value;
+        if (!isNull(value) && !this.isOutOfRange(value)) this.page = value;
     }
 
-    private normilazePage(page: number) {
-        if (page > this.max) return this.max;
-        if (page < this.min) return this.min;
-        return page;
+    private changeHandler(value: number | null) {
+        this.inputValue = this.page;
+    }
+
+    private created() {
+        this.pageWatchHanlder();
     }
 }
 </script>
