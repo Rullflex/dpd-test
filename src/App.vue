@@ -1,5 +1,7 @@
 <template>
     <div id="app">
+        <VPagination v-model="currentPage" :max="20"></VPagination>
+
         <table>
             <thead>
                 <tr>
@@ -31,50 +33,20 @@
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
 
-interface Location {
-    city: string;
-    coordinates: { latitude: string; longitude: string };
-    country: string;
-    postcode: number;
-    state: string;
-}
+// Components
+import VPagination from '@/components/VPagination.vue';
 
-interface User {
-    cell: string;
-    dob: {
-        age: number;
-        date: string;
-    };
-    email: string;
-    gender: 'male' | 'female';
-    id: {
-        name: string;
-        value: string;
-    };
-    location: Location;
-    name: {
-        first: string;
-        last: string;
-        title: string;
-    };
-    nat: string;
-    phone: string;
-    picture: {
-        large: string;
-        medium: string;
-        thumbnail: string;
-    };
-    registered: {
-        age: number;
-        date: string;
-    };
-}
+// Interfaces
+import User from '@/core/interfaces/User';
 
 @Component({
-    components: {},
+    components: {
+        VPagination,
+    },
 })
 export default class App extends Vue {
     tableData: User[] = [];
+    currentPage = 1;
 
     async created() {
         const res: { results: User[] } = await (await fetch('/api.json')).json();
