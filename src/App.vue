@@ -8,12 +8,24 @@
             <thead>
                 <tr>
                     <th>Avatar</th>
-                    <th>Full name</th>
-                    <th>Gender</th>
-                    <th>Country</th>
-                    <th>Birth date</th>
-                    <th>Email</th>
-                    <th>Phone number</th>
+                    <th class="users-table__head-cell--clickable" @click="setSortingType(SortingTypeEnum.Name)">
+                        Full name
+                    </th>
+                    <th class="users-table__head-cell--clickable" @click="setSortingType(SortingTypeEnum.Gender)">
+                        Gender
+                    </th>
+                    <th class="users-table__head-cell--clickable" @click="setSortingType(SortingTypeEnum.Country)">
+                        Country
+                    </th>
+                    <th class="users-table__head-cell--clickable" @click="setSortingType(SortingTypeEnum.Date)">
+                        Birth date
+                    </th>
+                    <th class="users-table__head-cell--clickable" @click="setSortingType(SortingTypeEnum.Email)">
+                        Email
+                    </th>
+                    <th class="users-table__head-cell--clickable" @click="setSortingType(SortingTypeEnum.Phone)">
+                        Phone number
+                    </th>
                 </tr>
             </thead>
 
@@ -36,7 +48,7 @@
 import { Component, Vue, Watch } from 'vue-property-decorator';
 
 // Utils
-import { chunk, pick } from 'lodash';
+import { chunk, pick, sortBy } from 'lodash';
 import hasSearch from '@/core/utils/HasSearch';
 import formatDate from '@/core/utils/FormatDate';
 
@@ -59,6 +71,16 @@ interface TableRow {
 enum URLSearchParamsEnum {
     Search = 'search',
     Page = 'page',
+    Sort = 'sort',
+}
+
+enum SortingTypeEnum {
+    Name = 'name',
+    Gender = 'gender',
+    Country = 'country',
+    Date = 'date',
+    Email = 'email',
+    Phone = 'phone',
 }
 
 const PAGINATION_SIZE = 20;
@@ -70,10 +92,12 @@ const PAGINATION_SIZE = 20;
 })
 export default class App extends Vue {
     private readonly URLSearchParams: URLSearchParams = new URLSearchParams(window.location.search);
+    private readonly SortingTypeEnum = SortingTypeEnum;
 
     private tableData: User[] = [];
     private currentPage = 1;
     private searchText = '';
+    private sortingType: SortingTypeEnum | null = null;
 
     private get transformedTableData(): TableRow[] {
         return this.tableData.map((user) => {
@@ -98,16 +122,24 @@ export default class App extends Vue {
         });
     }
 
-    private get chunkedTableData(): TableRow[][] {
-        return chunk(this.filteredTableData, PAGINATION_SIZE);
+    private get sortedTableData(): TableRow[] {
+        return this.sortingType ? sortBy(this.filteredTableData, this.sortingType) : this.filteredTableData;
     }
 
-    private get currentPageTableData() {
+    private get chunkedTableData(): TableRow[][] {
+        return chunk(this.sortedTableData, PAGINATION_SIZE);
+    }
+
+    private get currentPageTableData(): TableRow[] {
         return this.chunkedTableData[this.currentPage - 1];
     }
 
-    private get paginationMax() {
+    private get paginationMax(): number {
         return this.chunkedTableData.length;
+    }
+
+    private setSortingType(type: SortingTypeEnum) {
+        this.sortingType = type;
     }
 
     private updateURLSearch() {
@@ -127,12 +159,23 @@ export default class App extends Vue {
         this.updateURLSearch();
     }
 
-    private parseQueryFilters() {
-        const page = this.URLSearchParams.get(URLSearchParamsEnum.Page);
-        if (page) this.currentPage = parseInt(page);
+    @Watch('sortingType')
+    private onSortingTypeChanged() {
+        if (!this.sortingType) return;
+        this.URLSearchParams.set(URLSearchParamsEnum.Sort, this.sortingType);
+        this.updateURLSearch();
+    }
 
-        const search = this.URLSearchParams.get(URLSearchParamsEnum.Search);
-        if (search) this.searchText = search;
+    private parseQueryFilters() {
+        const pageParam = this.URLSearchParams.get(URLSearchParamsEnum.Page);
+        if (pageParam) this.currentPage = parseInt(pageParam);
+
+        const searchParam = this.URLSearchParams.get(URLSearchParamsEnum.Search);
+        if (searchParam) this.searchText = searchParam;
+
+        const sortParam = this.URLSearchParams.get(URLSearchParamsEnum.Sort);
+        const querySortingType = Object.values(SortingTypeEnum).find((el) => el === sortParam);
+        if (querySortingType) this.sortingType = querySortingType;
     }
 
     private async fetchTableData() {
@@ -160,5 +203,13 @@ export default class App extends Vue {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     color: #2c3e50;
+}
+
+.users-table {
+    &__head-cell {
+        &--clickable {
+            cursor: pointer;
+        }
+    }
 }
 </style>
