@@ -30,7 +30,7 @@
             </thead>
 
             <tbody>
-                <tr v-for="(row, rowIdx) in currentPageTableData" :key="rowIdx">
+                <tr v-for="row in currentPageTableData" :key="row.id">
                     <td><img :src="row.picture" alt="" /></td>
                     <td>{{ row.name }}</td>
                     <td>{{ row.gender }}</td>
@@ -102,6 +102,7 @@ export default class App extends Vue {
     private get transformedTableData(): TableRow[] {
         return this.tableData.map((user) => {
             return {
+                id: user.registered.date,
                 picture: user.picture.medium,
                 name: user.name.first + ' ' + user.name.last,
                 gender: user.gender,
